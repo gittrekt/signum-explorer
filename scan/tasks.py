@@ -50,7 +50,7 @@ def update_MasterSNR():
         PeerMonitor.objects.filter(announced_address=node[0]).update(reward_state=node[2], reward_time=node[3])
     logger.info("TASK - Updated MasterExplorer data")
 
-def task_cmd():
+def task_cmd(): # option to run tasks manually
     logger.info(f"Force running task updates...")
     runner_Exchange.delay()
     runner_TxTotal.delay()
