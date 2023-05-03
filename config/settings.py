@@ -29,7 +29,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "changeme")
 APP_ENV=os.environ.get("APP_ENV")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "off") == "on"
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", ["*"])
 CORS_ORIGIN_ALLOW_ALL = True
 AUTH_USER_MODEL = "auth.User"
 
@@ -50,6 +50,7 @@ THIRD_PARTY_APPS = [
     "rest_framework",
     "django_extensions",
     'django_celery_beat',
+    "coverage",
 ]
 LOCAL_APPS = [
     "scan",

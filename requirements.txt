@@ -37,3 +37,4 @@ geoip2
 eventlet
 oracledb
 cx_Oracle
+coverage
