@@ -1,8 +1,12 @@
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.views.generic import DetailView, ListView
-from config.settings import BRS_BOOTSTRAP_PEERS
+from config.settings import (
+    BRS_BOOTSTRAP_PEERS,
+    BRS_P2P_VERSION,
+)
+from distutils.version import LooseVersion
 from django.http import HttpResponse
 from scan.models import PeerMonitor
 import json
@@ -16,14 +20,14 @@ def peers_charts_view(request):
         .annotate(cnt=Count("version"))
         .order_by("-version", "-cnt")
     )
-    
+
     votes = (
         PeerMonitor.objects.filter(state=PeerMonitor.State.ONLINE).exclude(reward_state='Duplicate')
         .values("platform")
         .annotate(cnt=Count("platform"))
         .order_by("-cnt")
     )
-        
+
     countries = (
         PeerMonitor.objects.filter(state=PeerMonitor.State.ONLINE)
         .values("country_code")
@@ -74,8 +78,15 @@ class PeerMonitorListView(ListView):
                 .order_by("-availability").first())
             if featured_peer:
                 featured_peers.append(featured_peer)
-        
+
         context["featured_peers"] = featured_peers
+        _peers = PeerMonitor.objects.all().values()
+        context["online_now"] = _peers.filter(state=PeerMonitor.State.ONLINE).count()
+        context["unavailable"] = _peers.filter(~Q(state=PeerMonitor.State.ONLINE)).count()
+        context["updated"] = round((
+            _peers.filter(version=('v'+BRS_P2P_VERSION)).count() /
+            _peers.count()
+        )*100, 2)
 
         return context
 
@@ -87,4 +98,3 @@ class PeerMonitorDetailView(DetailView):
     context_object_name = "peer"
     slug_field = "announced_address"
     slug_url_kwarg = "address"
-    

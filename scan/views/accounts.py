@@ -1,5 +1,9 @@
-from django.db.models import Q, F, Count
-from django.db.models import Q, F, Count
+from django.db.models import (
+    Q, 
+    F, 
+    Count, 
+    Prefetch,
+)
 from django.views.generic import ListView
 
 from java_wallet.models import (
@@ -42,8 +46,6 @@ from config.settings import DEBUG
 if DEBUG:
     from silk.profiling.profiler import silk_profile
 
-#from scan.views.miners import get_miners
-
 class AccountsListView(ListView):
     model = Account
     queryset = (
@@ -73,8 +75,6 @@ class AddressDetailView(IntSlugDetailView):
     slug_field = "id"
     slug_url_kwarg = "id"
 
-    #@silk_profile(name='Detailed Account View')
-    #@silk_profile(name='Detailed Account View')
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         obj = context[self.context_object_name]
@@ -108,7 +108,8 @@ class AddressDetailView(IntSlugDetailView):
                 .filter(Q(sender_id=obj.id) | Q(recipient_id=obj.id))
                 .order_by("-height")
             )
-        txs_cnt = len(txs_db)
+
+        txs_cnt = txs_db.count()
         txs = txs_db[:15]
         for t in txs:
             fill_data_transaction(t, list_page=True)

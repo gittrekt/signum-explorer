@@ -66,7 +66,12 @@
       <div class="card-body">
         <div class="d-flex flex-column flex-md-row align-items-center">
           <small class="my-0 mr-md-auto text-muted">
-              A total of {{ paginator.count|intcomma }} nodes found
+                <p>
+                  Found Peers: {{ paginator.count|intcomma }}
+                  <br>Available Peers: {{ online_now|intcomma }}
+                  <br>Unavailable Peers: {{ unavailable|intcomma }}
+                  <br>Peers on latest version: {{ updated|intcomma }}%
+                </p>
           </small>
           {% include "paginator.html" %}
         </div>

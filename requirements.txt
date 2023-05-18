@@ -31,7 +31,7 @@ django-silk
 django-cprofile-middleware
 django-live-profiler
 django-celery-beat
-django-debug-toolbar
+django-debug-toolbar>=4.1.0
 ipapi
 geoip2
 eventlet

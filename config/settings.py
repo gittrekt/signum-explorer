@@ -9,28 +9,45 @@ https://docs.djangoproject.com/en/2.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
-
+from base64 import b64encode
 import logging
 import os
-
 import simplejson as json
 import urllib3
-
 urllib3.disable_warnings()
+
+APP_ENV=os.environ.get("APP_ENV")
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/2.1/howto/static-files/
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
+# Internationalization
+# https://docs.djangoproject.com/en/2.1/topics/i18n/
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "UTC"
+USE_I18N = True
+USE_L10N = True
+USE_TZ = False
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", "changeme")
+ALLOWED_HOSTS = json.loads(os.environ.get("ALLOWED_HOSTS", ""))
+CORS_ORIGIN_ALLOW_ALL = True
+CSRF_COOKIE_MASKED = True
+allowed = []
+for host in ALLOWED_HOSTS:
+    allowed.append("http://"+str(host))
+CSRF_TRUSTED_ORIGINS = allowed
+SECRET_KEY = os.environ.get("SECRET_KEY", b64encode(os.urandom(64)).decode('utf-8'))
 
-APP_ENV=os.environ.get("APP_ENV")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "off") == "on"
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", ["*"])
-CORS_ORIGIN_ALLOW_ALL = True
 AUTH_USER_MODEL = "auth.User"
 
 # Application definition
@@ -77,7 +94,7 @@ if DEBUG:
     SILKY_PYTHON_PROFILER = True
     DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
     THIRD_PARTY_APPS += ["silk", "debug_toolbar"]
-    INTERNAL_IPS = (os.environ.get("INTERNAL_IPS", ""),)
+    INTERNAL_IPS = json.loads(os.environ.get("INTERNAL_IPS", ""))
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -135,19 +152,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# Internationalization
-# https://docs.djangoproject.com/en/2.1/topics/i18n/
-LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
-USE_I18N = True
-USE_L10N = True
-USE_TZ = False
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.1/howto/static-files/
-STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
-
 # Caching
 CACHES = {
     "default": {
@@ -204,7 +208,6 @@ LOGGING = {
 
 # Sentry
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
-
 if SENTRY_DSN:
     from sentry_sdk import init
     from sentry_sdk.integrations.django import DjangoIntegration
@@ -233,36 +236,23 @@ if SENTRY_DSN:
 
 # UA-XXXXXXXXX-X
 GOOGLE_TRACKING_ID = os.environ.get("GOOGLE_TRACKING_ID")
-
+SITE_HOSTING = os.environ.get("SITE_HOSTING", "")
 DEFAULT_P2P_PORT = int(os.environ.get("DEFAULT_P2P_PORT", 8123))
 DEFAULT_API_V1_PORT = int(os.environ.get("DEFAULT_API_V1_PORT", 8125))
-
-BRS_P2P_VERSION = os.environ.get("BRS_P2P_VERSION", "3.2.1")
-MIN_PEER_VERSION = os.environ.get("MIN_PEER_VERSION", "3.2.0")
-
+BRS_BOOTSTRAP_PEERS = json.loads(os.environ.get("BRS_BOOTSTRAP_PEERS", "[]"))
+BRS_P2P_VERSION = os.environ.get("BRS_P2P_VERSION", "")
+MIN_PEER_VERSION = os.environ.get("MIN_PEER_VERSION", "3.6.0")
 SIGNUM_NODE = os.environ.get("SIGNUM_NODE")
-
+WALLET_URL = os.environ.get("WALLET_URL")
+TEST_NET = os.environ.get("TEST_NET")
 BLOCK_REWARD_LIMIT_HEIGHT = 972000
 BLOCK_REWARD_LIMIT_AMOUNT = 100
-
-WALLET_URL = os.environ.get("WALLET_URL")
-
 FEATURED_ASSETS = json.loads(os.environ.get("FEATURED_ASSETS", "[]"))
-
 BLOCKED_ASSETS = json.loads(os.environ.get("BLOCKED_ASSETS", "[]"))
 PHISHING_ASSETS = json.loads(os.environ.get("PHISHING_ASSETS", "[]"))
-
-BRS_BOOTSTRAP_PEERS = json.loads(os.environ.get("BRS_BOOTSTRAP_PEERS", "[]"))
-
-PEERS_SCAN_DELAY = int(os.environ.get("PEERS_SCAN_DELAY", "600"))
-TASKS_SCAN_DELAY = int(os.environ.get("TASKS_SCAN_DELAY", "60"))
-
-SITE_HOSTING = os.environ.get("SITE_HOSTING", " ")
-
+#PEERS_SCAN_DELAY = int(os.environ.get("PEERS_SCAN_DELAY", "600"))
+#TASKS_SCAN_DELAY = int(os.environ.get("TASKS_SCAN_DELAY", "60"))
 # for fork solving
 AGGR_STORE_BLOCK_SIGNATURE = 3600 * 24 * 7
-
-TEST_NET = os.environ.get("TEST_NET")
-
 # for syncing peer SNR status
-SNR_MASTER_EXPLORER = os.environ.get("SNR_MASTER_EXPLORER")
+SNR_MASTER_EXPLORER = os.environ.get("SNR_MASTER_EXPLORER", "")

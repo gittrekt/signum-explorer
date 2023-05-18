@@ -5,6 +5,9 @@ from celery.signals import worker_ready
 from celery.schedules import crontab
 from django.conf import settings
 
+from dotenv import load_dotenv
+load_dotenv()
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 app = Celery("config")
 proto = os.environ.get("CELERY_BROKER_PROTO")
