@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 
 from scan.views.accounts import AccountsListView, AddressDetailView
 from scan.views.assets import (
@@ -55,6 +55,9 @@ from scan.views.cashbacks import CBListView
 from scan.views.aliases import AliasListView
 from scan.views.subscriptions import SubscriptionListView
 from scan.views.distribution import DistributionListView
+from django.views.generic.base import RedirectView
+
+from scan.views.download import get_download
 
 urlpatterns = [
     path("", index, name="index"),
@@ -92,6 +95,8 @@ urlpatterns = [
     path("json/top-accounts/", topAccountsJson, name="json-account"),
     path("json/top-accounts/<int:results>", topAccountsJson),
     # path("admin/", admin.site.urls),
+    path("download/<str:ware>/", get_download, name="download"),
+    path("download/", RedirectView.as_view(url="https://github.com/signum-network/"), name="download"),
 ]
 
 if settings.DEBUG:

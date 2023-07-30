@@ -9,11 +9,13 @@ https://docs.djangoproject.com/en/2.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
+import ast
 from base64 import b64encode
 import logging
 import os
 import simplejson as json
 import urllib3
+from socket import gethostname, gethostbyname
 urllib3.disable_warnings()
 
 APP_ENV=os.environ.get("APP_ENV")
@@ -37,13 +39,17 @@ USE_TZ = False
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 # SECURITY WARNING: keep the secret key used in production secret!
-ALLOWED_HOSTS = json.loads(os.environ.get("ALLOWED_HOSTS", ""))
+ALLOWED_HOSTS = ["127.0.0.1", "."+gethostname(), gethostbyname(gethostname())]
+for host in json.loads(os.environ.get("ALLOWED_HOSTS", "")):
+    ALLOWED_HOSTS.append(host)
+print(f"**************************{ALLOWED_HOSTS}*******************")
 CORS_ORIGIN_ALLOW_ALL = True
-CSRF_COOKIE_MASKED = True
+APPEND_SLASH=False
+#CSRF_COOKIE_DOMAIN=""
 allowed = []
 for host in ALLOWED_HOSTS:
     allowed.append("http://"+str(host))
-CSRF_TRUSTED_ORIGINS = allowed
+#CSRF_TRUSTED_ORIGINS = allowed
 SECRET_KEY = os.environ.get("SECRET_KEY", b64encode(os.urandom(64)).decode('utf-8'))
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -58,6 +64,7 @@ DJANGO_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "daphne",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
 ]
@@ -67,7 +74,7 @@ THIRD_PARTY_APPS = [
     "rest_framework",
     "django_extensions",
     'django_celery_beat',
-    "coverage",
+#    "coverage",
 ]
 LOCAL_APPS = [
     "scan",
@@ -117,7 +124,8 @@ TEMPLATES = [
     }
 ]
 
-WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
+#WSGI_APPLICATION = "config.asgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
@@ -128,7 +136,7 @@ DATABASES = {
         "HOST": os.environ.get("DB_DEFAULT_HOST"),
         "USER": os.environ.get("DB_DEFAULT_USER"),
         "PASSWORD": os.environ.get("DB_DEFAULT_PASSWORD"),
-        "OPTIONS": json.loads(os.environ.get("DB_DEFAULT_OPTIONS", "{}")),
+        "OPTIONS": ast.literal_eval(os.environ.get("DB_DEFAULT_OPTIONS", "{}")),
     },
     "java_wallet": {
         "ENGINE": os.environ.get("DB_JAVA_WALLET_ENGINE"),
@@ -136,7 +144,7 @@ DATABASES = {
         "HOST": os.environ.get("DB_JAVA_WALLET_HOST"),
         "USER": os.environ.get("DB_JAVA_WALLET_USER"),
         "PASSWORD": os.environ.get("DB_JAVA_WALLET_PASSWORD"),
-        "OPTIONS": json.loads(os.environ.get("DB_JAVA_WALLET_OPTIONS", "{}")),
+        "OPTIONS": ast.literal_eval(os.environ.get("DB_JAVA_WALLET_OPTIONS", "{}")),
     },
 }
 DATABASE_ROUTERS = ["java_wallet.db_router.DBRouter", "scan.db_router.DBRouter"]
@@ -208,7 +216,7 @@ LOGGING = {
 
 # Sentry
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
-if SENTRY_DSN:
+if SENTRY_DSN and os.environ.get("ENABLE_SENTRY") == "on":
     from sentry_sdk import init
     from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.logging import LoggingIntegration

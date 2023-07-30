@@ -46,6 +46,8 @@ from config.settings import DEBUG
 if DEBUG:
     from silk.profiling.profiler import silk_profile
 
+from asgiref.sync import async_to_sync, sync_to_async
+
 class AccountsListView(ListView):
     model = Account
     queryset = (
@@ -79,7 +81,6 @@ class AddressDetailView(IntSlugDetailView):
         context = super().get_context_data(**kwargs)
         obj = context[self.context_object_name]
         
-        
         # To also show contract names when checking as an account
         if not obj.name:
             obj.name = get_account_name(obj.id)
@@ -109,7 +110,7 @@ class AddressDetailView(IntSlugDetailView):
                 .order_by("-height")
             )
 
-        txs_cnt = txs_db.count()
+        txs_cnt = len(txs_db)
         txs = txs_db[:15]
         for t in txs:
             fill_data_transaction(t, list_page=True)
