@@ -15,7 +15,6 @@ from java_wallet.fields import get_desc_tx_type
 
 from java_wallet.models import Account, AccountBalance, Alias, Asset, At, AtState, Block, RewardRecipAssign, Trade, Transaction, IndirectIncoming, Subscription
 
-
 @cache_memoize(3600)
 def get_account_name(account_id: int) -> str:
     if account_id == 0:

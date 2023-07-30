@@ -63,7 +63,11 @@ class Alias(models.Model):
     timestamp = TimestampField()
     height = models.IntegerField()
     latest = models.IntegerField()
+<<<<<<< HEAD
     tld = models.IntegerField()
+=======
+    tld = models.IntegerField(blank=True, null=True)
+>>>>>>> e7d1e0e519ef1c76c15ece67a68e2ececaeb039a
 
     class Meta:
         managed = True
@@ -111,7 +115,7 @@ class Asset(models.Model):
     quantity = PositiveBigIntegerField()
     decimals = models.IntegerField()
     height = models.IntegerField()
-    mintable = models.BooleanField()
+    mintable = models.BooleanField(blank=True, null=True)
 
     class Meta:
         managed = True
@@ -148,7 +152,7 @@ class At(models.Model):
     ap_code = models.BinaryField()
     height = models.IntegerField()
     latest = models.IntegerField()
-    ap_code_hash_id = PositiveBigIntegerField()
+    ap_code_hash_id = PositiveBigIntegerField(blank=True, null=True)
 
     class Meta:
         managed = True
@@ -228,9 +232,15 @@ class Block(models.Model):
     nonce = PositiveBigIntegerField()
     ats = models.TextField(blank=True, null=True)
     version = os.environ.get('BRS_P2P_VERSION')
+<<<<<<< HEAD
     total_fee_cash_back = PositiveBigIntegerField()
     total_fee_burnt= PositiveBigIntegerField()
 
+=======
+    total_fee_cash_back = PositiveBigIntegerField(blank=True, null=True)
+    total_fee_burnt= PositiveBigIntegerField(blank=True, null=True)
+    
+>>>>>>> e7d1e0e519ef1c76c15ece67a68e2ececaeb039a
     class Meta:
         managed = True
         ordering = ['-height']
@@ -462,6 +472,20 @@ class Transaction(models.Model):
             models.Index(fields=['sender_id', 'recipient_id', 'cash_back_id', 'height', 'id']),
         ]
 
+<<<<<<< HEAD
+=======
+class IndirectIncoming(models.Model):
+    db_id = models.BigAutoField(primary_key=True)
+    account_id = PositiveBigIntegerField()
+    transaction_id = PositiveBigIntegerField()
+    height = models.IntegerField()
+    amount = PositiveBigIntegerField(null=True)
+    quantity = PositiveBigIntegerField(null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'indirect_incoming'
+>>>>>>> e7d1e0e519ef1c76c15ece67a68e2ececaeb039a
 
 class UnconfirmedTransaction(models.Model):
     db_id = models.BigAutoField(primary_key=True)
@@ -479,7 +503,7 @@ class UnconfirmedTransaction(models.Model):
 
 
 class Version(models.Model):
-    next_update = models.IntegerField()
+    next_update = models.IntegerField(primary_key=True)
 
     class Meta:
         managed = True
