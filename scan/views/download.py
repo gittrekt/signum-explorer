@@ -26,5 +26,5 @@ def get_download(request, *args, **kwargs):
                     return redirect("https://github.com/signum-network/signum-xt-wallet/")
             else: 
                 raise Exception("Not Found")
-    except Exception as e:
-        return HttpResponseNotFound(f"{e}")
+    except:
+        return HttpResponseNotFound()
