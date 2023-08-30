@@ -88,6 +88,8 @@ class PeerMonitorListView(ListView):
             _peers.count()
         )*100, 2)
 
+        context["last_scan"] = PeerMonitor.objects.values("modified_at").order_by("-modified_at").first()
+
         return context
 
 

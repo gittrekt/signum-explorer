@@ -15,6 +15,7 @@ proto = os.environ.get("CELERY_BROKER_PROTO")
 class Config:
     beat_scheduler = 'django_celery_beat.schedulers:DatabaseScheduler'
     broker_url = (f'{str(os.environ.get("CELERY_BROKER_PROTO"))}://{str(os.environ.get("CELERY_BROKER_HOST"))}{os.environ.get("CELERY_BROKER_DB", "")}')
+    broker_connection_retry_on_startup = True
     result_backend = str(os.environ.get("CELERY_BROKER_BACK", None))
     broker_pool_limit = 10
     broker_connection_timeout = 30

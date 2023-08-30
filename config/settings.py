@@ -15,7 +15,7 @@ import logging
 import os
 import simplejson as json
 import urllib3
-from socket import gethostname, gethostbyname
+from socket import gethostname, gethostbyname, getfqdn
 urllib3.disable_warnings()
 
 APP_ENV=os.environ.get("APP_ENV")
@@ -39,17 +39,16 @@ USE_TZ = False
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 # SECURITY WARNING: keep the secret key used in production secret!
-ALLOWED_HOSTS = ["127.0.0.1", "."+gethostname(), gethostbyname(gethostname())]
+ALLOWED_HOSTS = ["."+gethostname()]
 for host in json.loads(os.environ.get("ALLOWED_HOSTS", "")):
     ALLOWED_HOSTS.append(host)
-print(f"**************************{ALLOWED_HOSTS}*******************")
 CORS_ORIGIN_ALLOW_ALL = True
-APPEND_SLASH=False
-#CSRF_COOKIE_DOMAIN=""
-allowed = []
-for host in ALLOWED_HOSTS:
-    allowed.append("http://"+str(host))
-#CSRF_TRUSTED_ORIGINS = allowed
+APPEND_SLASH = True
+if os.environ.get("USE_CSRF", "off") == "on":
+    allowed = []
+    for host in ALLOWED_HOSTS:
+        allowed.append("https://"+str(host))
+    CSRF_TRUSTED_ORIGINS = allowed
 SECRET_KEY = os.environ.get("SECRET_KEY", b64encode(os.urandom(64)).decode('utf-8'))
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -58,13 +57,17 @@ AUTH_USER_MODEL = "auth.User"
 
 # Application definition
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+ASGI_APPLICATION = "config.asgi.application"
+WSGI_APPLICATION = "config.wsgi.application"
+
 DJANGO_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "daphne",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
 ]
@@ -74,7 +77,6 @@ THIRD_PARTY_APPS = [
     "rest_framework",
     "django_extensions",
     'django_celery_beat',
-#    "coverage",
 ]
 LOCAL_APPS = [
     "scan",
@@ -124,9 +126,6 @@ TEMPLATES = [
     }
 ]
 
-ASGI_APPLICATION = "config.asgi.application"
-#WSGI_APPLICATION = "config.asgi.application"
-
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 DATABASES = {
@@ -148,7 +147,7 @@ DATABASES = {
     },
 }
 DATABASE_ROUTERS = ["java_wallet.db_router.DBRouter", "scan.db_router.DBRouter"]
-
+ATOMIC_REQUESTS = True
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [

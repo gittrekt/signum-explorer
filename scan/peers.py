@@ -1,25 +1,31 @@
-import geoip2.database, ipapi, random, requests, socket
-
-from burst.api.brs.p2p import P2PApi
-from burst.api.exceptions import BurstException
-from cache_memoize import cache_memoize
-from celery import shared_task
-from celery.utils.log import get_task_logger
+import random
+import re
+import socket
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from distutils.version import LooseVersion
+from functools import lru_cache
+from urllib.parse import urlparse
+
+import geoip2.database
+import ipapi
+import requests
+from cache_memoize import cache_memoize
+from celery import shared_task
+from celery.utils.log import get_task_logger
 from django import forms
 from django.conf import settings
 from django.db import transaction
 from django.db.models import DurationField, ExpressionWrapper, F, Q
 from django.db.models.functions import Now
 from django.utils import timezone
-from functools import lru_cache
-from java_wallet.models import Block
 from requests.exceptions import RequestException
+
+from burst.api.brs.p2p import P2PApi
+from burst.api.exceptions import BurstException
+from java_wallet.models import Block
 from scan.helpers.decorators import skip_if_running
 from scan.models import PeerMonitor
-from urllib.parse import urlparse
 
 logger = get_task_logger(__name__)
 
@@ -142,9 +148,11 @@ def explore_peer(local_difficulty: dict, address: str, updates: dict):
 
     ip = get_ip_by_domain(address)
     cc = get_country_by_ip(ip)
-    if cc == "??" or cc == "Undefined":
+    if cc == "??" or re.search('undefined', cc, re.IGNORECASE):
         cc = get_country_by_ip(ip, _refresh=True)
         logger.debug(f"Force refresh of {ip} - New country: {cc}")
+    if re.search('undefined', cc, re.IGNORECASE):
+        cc = "??"
 
     updates[address] = {
         "announced_address": peer_info["announcedAddress"],
@@ -364,3 +372,69 @@ def peer_cmd(self):
     )
 
     logger.debug("Done")
+
+def peer_cmd_manual():
+    print("Start the scan")
+
+    local_difficulty = get_local_difficulty()
+    print(f"Checking for height: {local_difficulty['height']}, id: {local_difficulty['id']}, prev id: {local_difficulty['previous_block_id']}")
+
+    addresses = get_nodes_list()
+    print(f"The list of peers:\n{addresses}") #enable to troubleshoot peers list
+    #print(addresses)            #enable to troubleshoot peers list
+    # explore every peer and collect updates
+    updates = {}
+    if settings.TEST_NET:
+        for address in addresses:
+            explore_node(local_difficulty, address, updates)
+    else:
+        with ThreadPoolExecutor(max_workers=20) as executor:
+            executor.map(lambda address: explore_node(local_difficulty, address, updates), addresses)
+    updates_with_data = tuple(filter(lambda x: x is not None, updates.values()))
+    # if more than __% peers were gone offline in __min, probably network problem
+    if len(updates_with_data) < get_count_nodes_online() * 0.8:
+        logger.warning(
+            "Peers update was rejected: %d - %d", len(updates_with_data), len(addresses)
+        )
+        return
+
+    # set all peers unreachable, if will no update - peer will be unreachable
+    PeerMonitor.objects.update(state=PeerMonitor.State.UNREACHABLE)
+
+    # calculate state and apply updates
+    for update in updates_with_data:
+        print("Update: %r", update)
+
+        peer_obj = PeerMonitor.objects.filter(
+            announced_address=update["announced_address"]
+        ).first()
+        if not peer_obj:
+            print("Found new peer: %s", update["announced_address"])
+
+        update["state"] = check_state(local_difficulty, update, peer_obj)
+
+        form = PeerMonitorForm(update, instance=peer_obj)
+
+        if form.is_valid():
+            form.save()
+        else:
+            print("Not valid data: %r - %r", form.errors, update)
+
+    PeerMonitor.objects.update(lifetime=F("lifetime") + 1)
+
+    PeerMonitor.objects.filter(
+        state__in=[PeerMonitor.State.UNREACHABLE, PeerMonitor.State.STUCK, PeerMonitor.State.FORKED]
+    ).update(downtime=F("downtime") + 1)
+
+    PeerMonitor.objects.annotate(
+        duration=ExpressionWrapper(
+            Now() - F("last_online_at"), output_field=DurationField()
+        )
+    ).filter(duration__gte=timedelta(days=3)).delete()
+
+    PeerMonitor.objects.update(
+        availability=100 - (F("downtime") / F("lifetime") * 100),
+        modified_at=timezone.now(),
+    )
+
+    print("Done")

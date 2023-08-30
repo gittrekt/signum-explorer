@@ -3,11 +3,11 @@
 #   * Rearrange models' order
 #   * Make sure each model has one field with primary_key=True
 #   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
-#   * Remove `managed = True` lines if you wish to allow Django to create, modify, and delete the table
+#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
-import os
 from django.db import models
 from .fields import PositiveBigIntegerField, TimestampField
+
 class Account(models.Model):
     db_id = models.BigAutoField(primary_key=True)
     id = PositiveBigIntegerField()
@@ -18,25 +18,12 @@ class Account(models.Model):
     description = models.TextField(blank=True, null=True)
     height = models.IntegerField()
     latest = models.IntegerField()
+
     class Meta:
-        managed = True
+        managed = False
         db_table = 'account'
-        ordering = ['-height']
         unique_together = (('id', 'height'),)
 
-class AccountBalance(models.Model):
-    db_id = models.BigAutoField(primary_key=True)
-    id = PositiveBigIntegerField()
-    balance = PositiveBigIntegerField()
-    unconfirmed_balance = PositiveBigIntegerField()
-    forged_balance = PositiveBigIntegerField()
-    height = models.IntegerField()
-    latest = models.IntegerField()
-    class Meta:
-        managed = True
-        db_table = 'account_balance'
-        ordering = ['-height']
-        unique_together = (('id', 'height'),)
 
 class AccountAsset(models.Model):
     db_id = models.BigAutoField(primary_key=True)
@@ -48,9 +35,24 @@ class AccountAsset(models.Model):
     latest = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'account_asset'
         unique_together = (('account_id', 'asset_id', 'height'),)
+
+
+class AccountBalance(models.Model):
+    db_id = models.BigAutoField(primary_key=True)
+    id = PositiveBigIntegerField()
+    balance = PositiveBigIntegerField()
+    unconfirmed_balance = PositiveBigIntegerField()
+    forged_balance = PositiveBigIntegerField()
+    height = models.IntegerField()
+    latest = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'account_balance'
+        unique_together = (('id', 'height'),)
 
 
 class Alias(models.Model):
@@ -63,14 +65,10 @@ class Alias(models.Model):
     timestamp = TimestampField()
     height = models.IntegerField()
     latest = models.IntegerField()
-<<<<<<< HEAD
-    tld = models.IntegerField()
-=======
-    tld = models.IntegerField(blank=True, null=True)
->>>>>>> e7d1e0e519ef1c76c15ece67a68e2ececaeb039a
+    tld = PositiveBigIntegerField(blank=True, null=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'alias'
         unique_together = (('id', 'height'),)
 
@@ -84,7 +82,7 @@ class AliasOffer(models.Model):
     latest = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'alias_offer'
         unique_together = (('id', 'height'),)
 
@@ -101,7 +99,7 @@ class AskOrder(models.Model):
     latest = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'ask_order'
         unique_together = (('id', 'height'),)
 
@@ -115,16 +113,16 @@ class Asset(models.Model):
     quantity = PositiveBigIntegerField()
     decimals = models.IntegerField()
     height = models.IntegerField()
-    mintable = models.BooleanField(blank=True, null=True)
+    mintable = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'asset'
 
 
 class AssetTransfer(models.Model):
     db_id = models.BigAutoField(primary_key=True)
-    id = PositiveBigIntegerField(unique=True)
+    id = PositiveBigIntegerField()
     asset_id = PositiveBigIntegerField()
     sender_id = PositiveBigIntegerField()
     recipient_id = PositiveBigIntegerField()
@@ -133,7 +131,7 @@ class AssetTransfer(models.Model):
     height = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'asset_transfer'
 
 
@@ -149,13 +147,13 @@ class At(models.Model):
     c_user_stack_bytes = models.IntegerField()
     c_call_stack_bytes = models.IntegerField()
     creation_height = models.IntegerField()
-    ap_code = models.BinaryField()
+    ap_code = models.TextField(blank=True, null=True)
     height = models.IntegerField()
     latest = models.IntegerField()
     ap_code_hash_id = PositiveBigIntegerField(blank=True, null=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'at'
         unique_together = (('id', 'height'),)
 
@@ -170,14 +168,14 @@ class AtMap(models.Model):
     latest = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'at_map'
 
 
 class AtState(models.Model):
     db_id = models.BigAutoField(primary_key=True)
     at_id = PositiveBigIntegerField()
-    state = models.BinaryField()
+    state = models.TextField()
     prev_height = models.IntegerField()
     next_height = models.IntegerField()
     sleep_between = models.IntegerField()
@@ -188,7 +186,7 @@ class AtState(models.Model):
     latest = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'at_state'
         unique_together = (('at_id', 'height'),)
 
@@ -205,7 +203,7 @@ class BidOrder(models.Model):
     latest = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'bid_order'
         unique_together = (('id', 'height'),)
 
@@ -215,7 +213,7 @@ class Block(models.Model):
     id = PositiveBigIntegerField(unique=True)
     version = models.IntegerField()
     timestamp = TimestampField(unique=True)
-    previous_block = models.ForeignKey('self', models.DO_NOTHING, blank=True, null=True, related_name='previous_block_r', to_field='id')
+    previous_block = models.ForeignKey('self', models.DO_NOTHING, to_field='id', blank=True, null=True)
     total_amount = PositiveBigIntegerField()
     total_fee = PositiveBigIntegerField()
     payload_length = models.IntegerField()
@@ -223,27 +221,19 @@ class Block(models.Model):
     previous_block_hash = models.CharField(max_length=32, blank=True, null=True)
     cumulative_difficulty = models.TextField()
     base_target = PositiveBigIntegerField()
-    next_block = models.ForeignKey('self', models.DO_NOTHING, blank=True, null=True, related_name='next_block_r', to_field='id')
+    next_block = models.ForeignKey('self', models.DO_NOTHING, to_field='id', related_name='block_next_block_set', blank=True, null=True)
     height = models.IntegerField(unique=True)
-    generation_signature = models.BinaryField(max_length=64)
+    generation_signature = models.CharField(max_length=64)
     block_signature = models.CharField(max_length=64)
     payload_hash = models.CharField(max_length=32)
-    generator_id = PositiveBigIntegerField(unique=True)
+    generator_id = PositiveBigIntegerField()
     nonce = PositiveBigIntegerField()
     ats = models.TextField(blank=True, null=True)
-    version = os.environ.get('BRS_P2P_VERSION')
-<<<<<<< HEAD
-    total_fee_cash_back = PositiveBigIntegerField()
-    total_fee_burnt= PositiveBigIntegerField()
-
-=======
     total_fee_cash_back = PositiveBigIntegerField(blank=True, null=True)
-    total_fee_burnt= PositiveBigIntegerField(blank=True, null=True)
-    
->>>>>>> e7d1e0e519ef1c76c15ece67a68e2ececaeb039a
+    total_fee_burnt = PositiveBigIntegerField(blank=True, null=True)
+
     class Meta:
-        managed = True
-        ordering = ['-height']
+        managed = False
         db_table = 'block'
 
 
@@ -260,7 +250,7 @@ class Escrow(models.Model):
     latest = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'escrow'
         unique_together = (('id', 'height'),)
 
@@ -274,9 +264,26 @@ class EscrowDecision(models.Model):
     latest = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'escrow_decision'
         unique_together = (('escrow_id', 'account_id', 'height'),)
+
+
+class FlywaySchemaHistory(models.Model):
+    installed_rank = models.IntegerField(primary_key=True)
+    version = models.CharField(max_length=50, blank=True, null=True)
+    description = models.CharField(max_length=200)
+    type = models.CharField(max_length=20)
+    script = models.CharField(max_length=1000)
+    checksum = models.IntegerField(blank=True, null=True)
+    installed_by = models.CharField(max_length=100)
+    installed_on = models.DateTimeField()
+    execution_time = models.IntegerField()
+    success = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'flyway_schema_history'
 
 
 class Goods(models.Model):
@@ -294,7 +301,7 @@ class Goods(models.Model):
     latest = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'goods'
         unique_together = (('id', 'height'),)
 
@@ -304,13 +311,12 @@ class IndirectIncoming(models.Model):
     account_id = PositiveBigIntegerField()
     transaction_id = PositiveBigIntegerField()
     height = models.IntegerField()
-    amount = PositiveBigIntegerField(null=True)
-    quantity = PositiveBigIntegerField(null=True)
+    amount = PositiveBigIntegerField(blank=True, null=True)
+    quantity = PositiveBigIntegerField(blank=True, null=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'indirect_incoming'
-        ordering = ['-height']
         unique_together = (('account_id', 'transaction_id'),)
 
 
@@ -318,7 +324,7 @@ class Peer(models.Model):
     address = models.CharField(primary_key=True, max_length=100)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'peer'
 
 
@@ -347,7 +353,7 @@ class Purchase(models.Model):
     latest = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'purchase'
         unique_together = (('id', 'height'),)
 
@@ -361,7 +367,7 @@ class PurchaseFeedback(models.Model):
     latest = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'purchase_feedback'
 
 
@@ -373,7 +379,7 @@ class PurchasePublicFeedback(models.Model):
     latest = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'purchase_public_feedback'
 
 
@@ -387,7 +393,7 @@ class RewardRecipAssign(models.Model):
     latest = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'reward_recip_assign'
         unique_together = (('account_id', 'height'),)
 
@@ -404,7 +410,7 @@ class Subscription(models.Model):
     latest = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'subscription'
         unique_together = (('id', 'height'),)
 
@@ -425,7 +431,7 @@ class Trade(models.Model):
     height = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'trade'
         unique_together = (('ask_order_id', 'bid_order_id'),)
 
@@ -462,30 +468,14 @@ class Transaction(models.Model):
     has_encrypttoself_message = models.IntegerField()
     cash_back_id = PositiveBigIntegerField(blank=True, null=True)
     recipients = None
-    versionBRS = os.environ.get('BRS_P2P_VERSION')
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'transaction'
         ordering = ['-height']
         indexes = [
             models.Index(fields=['sender_id', 'recipient_id', 'cash_back_id', 'height', 'id']),
         ]
-
-<<<<<<< HEAD
-=======
-class IndirectIncoming(models.Model):
-    db_id = models.BigAutoField(primary_key=True)
-    account_id = PositiveBigIntegerField()
-    transaction_id = PositiveBigIntegerField()
-    height = models.IntegerField()
-    amount = PositiveBigIntegerField(null=True)
-    quantity = PositiveBigIntegerField(null=True)
-
-    class Meta:
-        managed = True
-        db_table = 'indirect_incoming'
->>>>>>> e7d1e0e519ef1c76c15ece67a68e2ececaeb039a
 
 class UnconfirmedTransaction(models.Model):
     db_id = models.BigAutoField(primary_key=True)
@@ -498,9 +488,8 @@ class UnconfirmedTransaction(models.Model):
     height = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'unconfirmed_transaction'
-
 
 class Version(models.Model):
     next_update = models.IntegerField(primary_key=True)

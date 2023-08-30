@@ -37,8 +37,9 @@ geoip2
 eventlet
 oracledb
 cx_Oracle
-coverage
 setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
 httpagentparser
 uvicorn
+channels[daphne]
 daphne
+djcompiler

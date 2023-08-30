@@ -71,6 +71,7 @@
                   <br>Available Peers: {{ online_now|intcomma }}
                   <br>Unavailable Peers: {{ unavailable|intcomma }}
                   <br>Peers on latest version: {{ updated|intcomma }}%
+                  <br>Last scan: {{ last_scan.modified_at|naturaltime }}
                 </p>
           </small>
           {% include "paginator.html" %}
