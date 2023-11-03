@@ -42,4 +42,6 @@ httpagentparser
 uvicorn
 channels[daphne]
 daphne
+Twisted[tls,http2]
 djcompiler
+logtail-python

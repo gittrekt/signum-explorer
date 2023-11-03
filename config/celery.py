@@ -23,6 +23,7 @@ class Config:
     worker_concurrency = 5 * multiprocessing.cpu_count()
     worker_enable_remote_control = True
     worker_prefetch_multiplier = 1
+    task_time_limit = 110
     if proto == "redis":
         redis_max_connections = int(os.environ.get("CELERY_MAX_CONNECTIONS", 1))
     elif proto == "rediss":

@@ -301,7 +301,7 @@ def get_unconfirmed_transactions_index():
 
     return txs_pending
 
-@cache_memoize(300)
+@cache_memoize(1200)
 def get_miners(account_id: int):
     miners = BrsApi(settings.SIGNUM_NODE).get_accounts_with_reward_recipient(account_id)
     return miners
