@@ -45,3 +45,4 @@ daphne
 Twisted[tls,http2]
 djcompiler
 logtail-python
+twisted>=23.10.0rc1 # not directly required, pinned by Snyk to avoid a vulnerability
