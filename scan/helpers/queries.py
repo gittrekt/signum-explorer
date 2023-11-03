@@ -13,7 +13,8 @@ from burst.api.brs.v1.api import BrsApi
 from burst.constants import BLOCK_CHAIN_START_AT, TxSubtypeBurstMining, TxSubtypeColoredCoins, TxType
 from java_wallet.fields import get_desc_tx_type
 
-from java_wallet.models import Account, AccountBalance, Alias, Asset, At, AtState, Block, RewardRecipAssign, Trade, Transaction, IndirectIncoming, Subscription
+from java_wallet.models import Account, AccountBalance, Alias, Asset, At, AtState, Block, RewardRecipAssign, Trade, Transaction,IndirectIncoming, Subscription
+
 
 @cache_memoize(3600)
 def get_account_name(account_id: int) -> str:
@@ -153,7 +154,7 @@ def query_asset_treasury_acc(asset, account_id) -> (str):
     )
     return add_treasury
 
-@cache_memoize(60)
+@cache_memoize(None)
 def get_asset_details(asset_id: int) -> (str, int, int, bool):
     asset_details = (
         Asset.objects.using("java_wallet")

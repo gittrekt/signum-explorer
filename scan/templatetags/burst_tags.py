@@ -24,15 +24,20 @@ from java_wallet.models import (Block, IndirectIncoming, IndirectRecipient,
                                 Trade, Transaction)
 from scan.caching_data.exchange import CachingExchangeData
 from scan.caching_data.total_circulating import CachingTotalCirculating
-from scan.helpers.queries import (get_account_balance, get_account_name,
-                                  get_account_unconfirmed_balance,
-                                  get_asset_details, get_asset_price,
-                                  get_registered_tld_name,
-                                  get_subscription_alias,
-                                  get_subscription_recipient_id,
-                                  get_tld_reciever_id, get_total_circulating,
-                                  query_asset_fullhash,
-                                  query_asset_treasury_acc)
+from scan.helpers.queries import (
+    get_account_balance,
+    get_account_name,
+    get_account_unconfirmed_balance,
+    get_asset_details,
+    get_asset_price,
+    get_registered_tld_name,
+    get_subscription_alias,
+    get_subscription_recipient_id,
+    get_tld_reciever_id,
+    get_total_circulating,
+    query_asset_fullhash,
+    query_asset_treasury_acc
+)
 
 register = template.Library()
 
