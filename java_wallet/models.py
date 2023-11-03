@@ -65,7 +65,7 @@ class Alias(models.Model):
     timestamp = TimestampField()
     height = models.IntegerField()
     latest = models.IntegerField()
-    tld = PositiveBigIntegerField(blank=True, null=True)
+    tld = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -113,7 +113,7 @@ class Asset(models.Model):
     quantity = PositiveBigIntegerField()
     decimals = models.IntegerField()
     height = models.IntegerField()
-    mintable = models.IntegerField()
+    mintable = models.BooleanField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -150,6 +150,7 @@ class At(models.Model):
     ap_code = models.TextField(blank=True, null=True)
     height = models.IntegerField()
     latest = models.IntegerField()
+    ap_code_hash_id = PositiveBigIntegerField(blank=True, null=True)
     ap_code_hash_id = PositiveBigIntegerField(blank=True, null=True)
 
     class Meta:
@@ -229,9 +230,10 @@ class Block(models.Model):
     generator_id = PositiveBigIntegerField()
     nonce = PositiveBigIntegerField()
     ats = models.TextField(blank=True, null=True)
+    version = os.environ.get('BRS_P2P_VERSION')
     total_fee_cash_back = PositiveBigIntegerField(blank=True, null=True)
-    total_fee_burnt = PositiveBigIntegerField(blank=True, null=True)
-
+    total_fee_burnt= PositiveBigIntegerField(blank=True, null=True)
+    
     class Meta:
         managed = False
         db_table = 'block'
