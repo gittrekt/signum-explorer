@@ -15,6 +15,7 @@ from scan.caching_paginator import CachingPaginator
 from scan.helpers.queries import get_account_name, get_unconfirmed_transactions
 from scan.views.base import IntSlugDetailView
 from scan.views.filters.transactions import TxFilter
+from django.shortcuts import get_object_or_404
 
 
 def fill_data_transaction(obj, list_page=True):

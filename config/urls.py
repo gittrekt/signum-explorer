@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 
 from scan.views.accounts import AccountsListView, AddressDetailView
 from scan.views.assets import (
@@ -45,7 +45,7 @@ from scan.views.peers import (
 from scan.views.json import (
     getSNRjson,
     getStatejson,
-    TopAccountsJson,
+    topAccountsJson,
 )
 
 from scan.views.pending_transactions import pending_transactions
@@ -55,6 +55,9 @@ from scan.views.cashbacks import CBListView
 from scan.views.aliases import AliasListView
 from scan.views.subscriptions import SubscriptionListView
 from scan.views.distribution import DistributionListView
+from django.views.generic.base import RedirectView
+
+from scan.views.download import get_download
 
 urlpatterns = [
     path("", index, name="index"),
@@ -89,13 +92,15 @@ urlpatterns = [
     path("SNRinfo/", getSNRjson, name="snr-info"),
     path("json/SNRinfo/", getSNRjson, name="snr-info"),
     path("json/state/<str:address>", getStatejson, name="state"),
-    path("json/accounts/", TopAccountsJson, name="json-account"),
-    path("json/accounts/<int:results>", TopAccountsJson),
+    path("json/top-accounts/", topAccountsJson, name="json-account"),
+    path("json/top-accounts/<int:results>", topAccountsJson),
     # path("admin/", admin.site.urls),
+    path("download/<str:ware>/", get_download, name="download"),
+    path("download/", RedirectView.as_view(url="https://github.com/signum-network/"), name="download"),
 ]
 
 if settings.DEBUG:
-    import debug_toolbar
-
-    urlpatterns = [path("__debug__/", include(debug_toolbar.urls))] + urlpatterns
-    urlpatterns = [path('django_query_profiler/', include('django_query_profiler.client.urls'))] + urlpatterns
+    urlpatterns += [
+        path('__debug__/', include('debug_toolbar.urls')),
+        path("silk/", include("silk.urls", namespace="silk")),
+    ]
