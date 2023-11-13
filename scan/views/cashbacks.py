@@ -11,6 +11,7 @@ from java_wallet.models import Transaction
 from scan.caching_paginator import CachingPaginator
 from scan.helpers.queries import get_account_name
 from scan.views.base import IntSlugDetailView
+from scan.views.ats import fill_at_data
 
 
 def fill_data_transaction(obj, list_page=True):

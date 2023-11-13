@@ -1,18 +1,16 @@
-import logging
-import os
-import requests, json
+import os, requests, json
+from config.settings import SNR_MASTER_EXPLORER
 
-from time import sleep
-from django.conf import settings
-from config.settings import TASKS_SCAN_DELAY, SNR_MASTER_EXPLORER
-
-from scan.models import PeerMonitor
 from scan.caching_data.exchange import CachingExchangeData
 from scan.caching_data.total_txs_count import CachingTotalTxsCount
 from scan.caching_data.total_circulating import CachingTotalCirculating
-#from scan.caching_data.total_accounts_count import CachingTotalAccountsCount
+from scan.models import PeerMonitor
+from scan.helpers.decorators import skip_if_running
 
-logger = logging.getLogger(__name__)
+from celery import shared_task
+from config.celery import app
+from celery.utils.log import get_task_logger
+logger = get_task_logger(__name__)
 
 ######################################
 # These tasks run on a regular       #
@@ -23,34 +21,47 @@ logger = logging.getLogger(__name__)
 # page load.                         #
 ######################################
 
-def task_cmd():
-    if TASKS_SCAN_DELAY > 0:  # Delay in env used when supervisord is used.
-        logger.info(f"Tasks Sleeping for {TASKS_SCAN_DELAY} seconds...")
-        
-############# Update Exchange ############## (change to 60 sec update)
-    sleep(TASKS_SCAN_DELAY)
-    logger.info("TASK - Update Cache Exchange data")
-    CachingExchangeData().update_live_data()
-    
-############## Update Total TX ############# (match block time, heavy db request)
-    logger.info("TASK - Update Total TX's count data")
+@shared_task(bind=True)
+@skip_if_running
+def runner_TxTotal(self):
+    ######### Update Total TX #########
     CachingTotalTxsCount().update_live_data()
+    logger.debug("TASK - Updated TX's count data")
 
-######### Update Total Circulating ######### (match block time, heavy db request)
-    logger.info("TASK - Update Total Circulating data")
+@shared_task(bind=True)
+@skip_if_running
+def runner_Exchange(self):        
+    ######### Update Exchange #########
+    CachingExchangeData().update_live_data()
+    logger.debug("TASK - Updated Exchange data")
+
+@shared_task(bind=True)
+@skip_if_running
+def runner_Circulating(self):
+    ######### Update Total Circulating #########
     CachingTotalCirculating().update_live_data()
-    
-######### Update Peers SNR Status ########## (change to 6 hours update)
-    if SNR_MASTER_EXPLORER :
-        logger.info("TASK - Update Peer SNR data")
+    logger.debug("TASK - Updated Circulating data")
+
+@shared_task(bind=True)
+@skip_if_running
+def update_MasterSNR(self):
+    try: 
         snr_master = list(requests.get(url=SNR_MASTER_EXPLORER + "/json/SNRinfo").json())
-        for node in snr_master:
-            PeerMonitor.objects.filter(announced_address=node[0]).update(reward_state=node[2], reward_time=node[3])
-        if snr_master :
-            logger.info("SNR Master Data Received")
+        logger.debug(f"TASK - SNR Response Received")
+    except: 
+        snr_master = []
+        logger.warning("TASK - No SNR Received!")
+    for node in snr_master:
+        PeerMonitor.objects.filter(announced_address=node[0]).update(reward_state=node[2], reward_time=node[3])
+    logger.debug("TASK - Updated MasterExplorer data")
 
+def task_cmd():
+    logger.info(f"Force running task updates...")
+    runner_Exchange.delay()
+    runner_TxTotal.delay()
+    runner_Circulating.delay()
+    update_MasterSNR.delay()
 
-
-#    def update_cache_total_accounts_count():
-#        logger.info("TASK - Update Total Accounts data")
-#        CachingTotalAccountsCount().update_live_data()
+    #    def update_cache_total_accounts_count():
+    #        logger.info("TASK - Update Total Accounts data")
+    #        CachingTotalAccountsCount().update_live_data()

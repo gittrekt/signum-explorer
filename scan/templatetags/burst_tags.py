@@ -1,27 +1,44 @@
+import gzip
+import os
+import struct
+import sys
+from ctypes import c_longlong, c_ulonglong
 from datetime import datetime, timedelta
 from math import ceil
-import sys
-import gzip
+
 from cache_memoize import cache_memoize
 from django import template
 from django.conf import settings
-from burst.constants import MAX_BASE_TARGET, TxSubtypeBurstMining, TxSubtypeColoredCoins, TxSubtypePayment, TxType
+
+from burst.api.brs.v1.api import BrsApi
+from burst.constants import (MAX_BASE_TARGET, TxSubtypeBurstMining,
+                             TxSubtypeColoredCoins, TxSubtypePayment, TxType)
 from burst.libs.functions import calc_block_reward
 from burst.libs.multiout import MultiOutPack
 from burst.libs.reed_solomon import ReedSolomon
-from burst.libs.transactions import get_message, get_message_sub, get_message_token
-from burst.api.brs.v1.api import BrsApi
+from burst.libs.transactions import (get_message, get_message_sub,
+                                     get_message_token)
 from config.settings import BLOCKED_ASSETS, PHISHING_ASSETS
 from java_wallet.fields import get_desc_tx_type
-from java_wallet.models import Block, IndirectIncoming, IndirectRecipient, Trade, Transaction
+from java_wallet.models import (Block, IndirectIncoming, IndirectRecipient,
+                                Trade, Transaction)
 from scan.caching_data.exchange import CachingExchangeData
 from scan.caching_data.total_circulating import CachingTotalCirculating
-import struct
-import os
-from ctypes import c_ulonglong, c_longlong
+from scan.helpers.queries import (
+    get_account_balance,
+    get_account_name,
+    get_account_unconfirmed_balance,
+    get_asset_details,
+    get_asset_price,
+    get_registered_tld_name,
+    get_subscription_alias,
+    get_subscription_recipient_id,
+    get_tld_reciever_id,
+    get_total_circulating,
+    query_asset_fullhash,
+    query_asset_treasury_acc
+)
 
-from scan.helpers.queries import get_account_name,get_asset_details, get_asset_price,  get_account_balance,get_account_unconfirmed_balance,get_total_circulating, query_asset_treasury_acc
-from scan.helpers.queries import get_registered_tld_name,get_tld_reciever_id,get_subscription_recipient_id,get_subscription_alias,query_asset_fullhash
 register = template.Library()
 
 @register.filter
@@ -291,8 +308,12 @@ def tx_quantity(tx: Transaction, filtered_account = None) -> float:
         if not asset_id:
             return 0
         else:
+            try:
+                name, decimals, total_quantity, mintable = get_asset_details(asset_id)
+            except:
+                decimals = 1
             quantity = int.from_bytes(tx.attachment_bytes[offset+24:offset+32], byteorder=sys.byteorder)
-            return div_decimals(quantity,decimals)
+            return div_decimals(quantity, decimals)
     elif tx.attachment_bytes and tx.type == TxType.COLORED_COINS:
         asset_id = int.from_bytes(tx.attachment_bytes[offset:offset+8], byteorder=sys.byteorder)
         try:
@@ -503,6 +524,8 @@ def tx_load_recipients(tx: Transaction) -> Transaction:
                 recipients.append(recipient)
 
             tx.recipients = recipients
+        else:
+            tx.recipients = []
     return tx
 
 @register.filter

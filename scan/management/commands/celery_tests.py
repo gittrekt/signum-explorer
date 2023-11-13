@@ -1,11 +1,10 @@
 from django.core.management import BaseCommand
 from celery import Celery, shared_task
 
-from scan.peers import peer_cmd
-
+from config.celery import debug_task
 
 class Command(BaseCommand):
-    help = "Peers monitor"
+    help = "Test celery command"
 
     def handle(self, *args, **options):
-        peer_cmd.delay()
+        debug_task.delay()

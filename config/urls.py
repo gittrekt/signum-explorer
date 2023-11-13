@@ -76,10 +76,12 @@ urlpatterns = [
     path("miner/", MinerListView.as_view(), name="miner"),
     path("forged-blocks/", ForgedBlocksListView.as_view(), name="forged-blocks"),
     # path("admin/", admin.site.urls),
+    path("download/<str:ware>/", get_download, name="download"),
+    path("download/", RedirectView.as_view(url="https://github.com/signum-network/"), name="download"),
 ]
 
 if settings.DEBUG:
-    import debug_toolbar
-
-    urlpatterns = [path("__debug__/", include(debug_toolbar.urls))] + urlpatterns
-    urlpatterns = [path('django_query_profiler/', include('django_query_profiler.client.urls'))] + urlpatterns
+    urlpatterns += [
+        path('__debug__/', include('debug_toolbar.urls')),
+        path("silk/", include("silk.urls", namespace="silk")),
+    ]

@@ -27,13 +27,17 @@ class BrsApiBase:
         if not node_address.startswith("http"):
             node_address = f"http://{node_address}"
 
+        # janky workaround if trying to connect to docker container
         validate = URLValidator()
         try:
             validate(node_address)
         except ValidationError:
-            raise ClientException("Not valid address")
-
-        parsed_url = urlparse(node_address)
+            try:
+                parsed_url = urlparse(node_address)
+            except:
+                raise ClientException("Not valid address")
+        else:
+            parsed_url = urlparse(node_address)
 
         if not parsed_url.port and not parsed_url.query:
             node_address = f"{node_address}:{self._default_port}"
@@ -103,3 +107,6 @@ class BrsApi(BrsApiBase):
         return self._request(queries.GetUnconfirmedTransactions())[
             "unconfirmedTransactions"
         ]
+
+    def get_accounts_with_reward_recipient(self, account_id: int):
+        return self._request(queries.GetAccountsWithRewardRecipient({"account": account_id}))['accounts']

@@ -165,11 +165,11 @@ def get_asset_details(asset_id: int) -> (str, int, int, bool):
         )
     return asset_details
 
-@cache_memoize(None)
+@cache_memoize(60)
 def get_asset_details_owner(asset_id: int) -> (str, int, int, bool, int):
     asset_details = (
-        Asset.objects.using("java_wallet")
-        .filter(id=asset_id)
+        Asset.objects.filter(id=asset_id)
+        .prefetch_related("name__decimals__quantity__mintable__account_id")
         .values_list("name", "decimals", "quantity", "mintable", "account_id")
         .first()
         )
@@ -198,11 +198,11 @@ def get_pool_id_for_block_db(block: Block) -> int:
         .first()
     )
 
-@cache_memoize(240)
+@cache_memoize(30)
 def get_total_circulating():
     return (
-        AccountBalance.objects.using("java_wallet")
-        .filter(latest=True)
+        AccountBalance.objects
+        .filter(balance__gt=0, latest=True)
         .exclude(id=0)
         .aggregate(Sum("balance"))["balance__sum"] 
     )  
@@ -254,7 +254,7 @@ def get_unconfirmed_transactions():
         t["amountNQT"] = int(t["amountNQT"])
         t["feeNQT"] = int(t["feeNQT"])
         t["sender_name"] = get_account_name(int(t["sender"]))
-
+        
         if "recipient" in t:
             t["recipient_exists"] = (
                 Account.objects.using("java_wallet")
@@ -263,15 +263,15 @@ def get_unconfirmed_transactions():
             )
             if t["recipient_exists"]:
                 t["recipient_name"] = get_account_name(int(t["recipient"]))
-
+        
         t["attachment_bytes"] = None
         if "attachmentBytes" in t:
             t["attachment_bytes"] =  bytes.fromhex(t["attachmentBytes"])
         if "attachment" in t and "recipients" in t["attachment"]:
             t["multiout"] = len(t["attachment"]["recipients"])
-
+        
         t["tx_name"] = get_desc_tx_type(t["type"], t["subtype"])
-
+        
     txs_pending.sort(key=lambda _x: _x["feeNQT"], reverse=True)
 
     return txs_pending
@@ -324,3 +324,94 @@ def get_forged_blocks_of_pool(pool_id):
         .order_by("-block")
         .values("generator_id", "block")
     )
+
+
+def get_description_url(pool_id: int) -> str:
+    description = (
+        Account.objects.using("java_wallet")
+        .filter(id=pool_id)
+        .values_list("description", flat=True)
+        .filter(latest=1)
+        .first()
+    )
+    try:
+        return json.loads(description)["hp"]
+    except (json.JSONDecodeError, TypeError, KeyError):
+        return ''
+
+
+def get_count_of_miners(pool_id: int) -> int:
+    return (
+        RewardRecipAssign.objects.using("java_wallet")
+        .filter(recip_id=pool_id)
+        .filter(latest=1)
+    ).count()
+
+
+def get_timestamp_of_block(height: int) -> datetime:
+    return (
+        Block.objects.using("java_wallet")
+        .filter(height=height)
+        .values_list("timestamp", flat=True)
+        .first()
+    )
+
+
+def get_forged_blocks_of_pool(pool_id):
+    miners = (
+        RewardRecipAssign.objects.using("java_wallet")
+        .filter(~Q(recip_id=F('account_id')))
+        .filter(height__lte=OuterRef("height"))
+        .filter(recip_id=pool_id)
+        .filter(latest=1)
+        .values_list("account_id", flat=True)
+    )
+    return (
+        Block.objects.using("java_wallet")
+        .filter(generator_id__in=miners)
+        .annotate(block=F("height"))
+        .order_by("-block")
+        .values("generator_id", "block")
+    )
+
+@cache_memoize(10)
+def get_unconfirmed_transactions_index():
+    txs_pending = BrsApi(settings.SIGNUM_NODE).get_unconfirmed_transactions()[:5]
+
+    for t in txs_pending:
+        t["timestamp"] = datetime.fromtimestamp(
+            t["timestamp"] + BLOCK_CHAIN_START_AT
+        )
+        t["amountNQT"] = int(t["amountNQT"])
+        t["feeNQT"] = int(t["feeNQT"])
+        t["sender_name"] = get_account_name(int(t["sender"]))
+
+        if "recipient" in t:
+            t["recipient_exists"] = (
+                Account.objects.using("java_wallet")
+                .filter(id=t["recipient"])
+                .exists()
+            )
+            if t["recipient_exists"]:
+                t["recipient_name"] = get_account_name(int(t["recipient"]))
+
+        t["tx_name"] = get_desc_tx_type(t["type"], t["subtype"])
+        
+    txs_pending.sort(key=lambda _x: _x["feeNQT"], reverse=True)
+
+    return txs_pending
+
+@cache_memoize(1200)
+def get_miners(account_id: int):
+    miners = BrsApi(settings.SIGNUM_NODE).get_accounts_with_reward_recipient(account_id)
+    return miners
+
+@cache_memoize(300)
+def get_miners_blocks(miners, cnt=15):
+    miners_cnt = len(miners)
+    miner_blks = {
+        miner : (Block.objects.using("java_wallet").filter(generator_id=miner).count())
+        for miner in miners
+    }
+    miner_blks = dict(sorted(miner_blks.items(), key=lambda x:x[1], reverse=True)[:min(miners_cnt, cnt)])
+    return miner_blks
