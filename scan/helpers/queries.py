@@ -90,7 +90,7 @@ def get_account_unconfirmed_balance(account_id: int) -> str:
         return 0
 
 @cache_memoize(3600)
-def get_details_by_tx(transaction_id:int) -> ( int, int,int):
+def get_details_by_tx(transaction_id:int) -> tuple((int, int, int)):
     # Value = Sender, Reciepent,Timestamp
     transactions_data = (
         Transaction.objects.using("java_wallet")
@@ -120,7 +120,7 @@ def get_ap_code(ap_code_hash_id: int) -> bytearray:
     )
     return ap_code
 
-def get_at_state(id: int) -> (bytearray, int):
+def get_at_state(id: int) -> tuple((bytearray, int)):
     return (        
         AtState.objects.using("java_wallet")
         .filter(at_id=id, latest=True)
@@ -156,7 +156,7 @@ def query_asset_treasury_acc(asset, account_id) -> (str):
     return add_treasury
 
 @cache_memoize(None)
-def get_asset_details(asset_id: int) -> (str, int, int, bool):
+def get_asset_details(asset_id: int) -> tuple((str, int, int, bool)):
     asset_details = (
         Asset.objects.using("java_wallet")
         .filter(id=asset_id)
@@ -166,7 +166,7 @@ def get_asset_details(asset_id: int) -> (str, int, int, bool):
     return asset_details
 
 @cache_memoize(60)
-def get_asset_details_owner(asset_id: int) -> (str, int, int, bool, int):
+def get_asset_details_owner(asset_id: int) -> tuple((str, int, int, bool, int)):
     asset_details = (
         Asset.objects.filter(id=asset_id)
         .prefetch_related("name__decimals__quantity__mintable__account_id")

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.urls import include, path
+from django.views.generic.base import RedirectView
 
 from scan.views.accounts import AccountsListView, AddressDetailView
 from scan.views.aliases import AliasListView
@@ -18,7 +19,7 @@ from scan.views.cashbacks import CBListView
 from scan.views.distribution import DistributionListView
 from scan.views.forged_blocks import ForgedBlocksListView
 from scan.views.index import index
-from scan.views.json import TopAccountsJson, getSNRjson, getStatejson
+from scan.views.json import topAccountsJson, getSNRjson, getStatejson
 from scan.views.marketplace import (
     MarketPlaceDetailView,
     MarketPlaceListView,
@@ -35,6 +36,8 @@ from scan.views.pools import PoolDetailView, PoolListView
 from scan.views.search import search_view
 from scan.views.subscriptions import SubscriptionListView
 from scan.views.transactions import TxDetailView, TxListView, tx_export_csv
+
+from scan.views.download import get_download
 
 urlpatterns = [
     path("", index, name="index"),
@@ -69,8 +72,8 @@ urlpatterns = [
     path("SNRinfo/", getSNRjson, name="snr-info"),
     path("json/SNRinfo/", getSNRjson, name="snr-info"),
     path("json/state/<str:address>", getStatejson, name="state"),
-    path("json/accounts/", TopAccountsJson, name="json-account"),
-    path("json/accounts/<int:results>", TopAccountsJson),
+    path("json/accounts/", topAccountsJson, name="json-account"),
+    path("json/accounts/<int:results>", topAccountsJson),
     path("pools/", PoolListView.as_view(), name="pools"),
     path("pool/<str:id>", PoolDetailView.as_view(), name="pool-detail"),
     path("miner/", MinerListView.as_view(), name="miner"),
