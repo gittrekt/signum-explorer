@@ -7,6 +7,7 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
 from .fields import PositiveBigIntegerField, TimestampField
+import os
 
 class Account(models.Model):
     db_id = models.BigAutoField(primary_key=True)

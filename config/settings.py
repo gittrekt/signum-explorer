@@ -13,12 +13,13 @@ import ast
 from base64 import b64encode
 import logging
 import os
-import simplejson as json
+#import simplejson as json
+import json
 import urllib3
 from socket import gethostname, gethostbyname, getfqdn
 urllib3.disable_warnings()
 
-APP_ENV=os.environ.get("APP_ENV")
+APP_ENV=os.environ.get("APP_ENV", "development")
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -40,7 +41,8 @@ USE_TZ = False
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 # SECURITY WARNING: keep the secret key used in production secret!
 ALLOWED_HOSTS = ["."+gethostname()]
-for host in json.loads(os.environ.get("ALLOWED_HOSTS", "")):
+ALLOWED_HOSTS_ENV = json.loads(os.environ.get("ALLOWED_HOSTS", ""))
+for host in ALLOWED_HOSTS_ENV:
     ALLOWED_HOSTS.append(host)
 CORS_ORIGIN_ALLOW_ALL = True
 APPEND_SLASH = True
@@ -183,7 +185,7 @@ REST_FRAMEWORK = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "root": {"level": "WARNING", "handlers": ["console"]},
+#    "root": {"level": "WARNING", "handlers": ["console"]},
     "formatters": {
         "standard": {
             "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
@@ -191,25 +193,28 @@ LOGGING = {
         }
     },
     "handlers": {
+        'logtail': {
+            'class': 'logtail.LogtailHandler',
+            'source_token': f"{os.environ.get('LOGTAIL_SOURCE', '')}",
+        },
         "console": {
-            "level": "DEBUG",
+#            "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "standard",
         }
     },
     "loggers": {
-        "django": {"handlers": ["console"], "level": "WARNING", "propagate": False},
-        "django.db.backends": {
-            "handlers": ["console"],
-            "level": "WARNING",
-            "propagate": False,
+        "": {
+            "handlers": [
+                "logtail",
+                "console"
+            ],
+            "level": "INFO",
         },
-        "django.request": {
-            "handlers": ["console"],
-            "level": "ERROR",
-            "propagate": False,
-        },
-        "scan": {"handlers": ["console"], "level": "INFO", "propagate": False},
+#        "django": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+#        "django.db.backends": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+#        "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+#        "scan": {"handlers": ["console"], "level": "INFO", "propagate": False},
     },
 }
 
